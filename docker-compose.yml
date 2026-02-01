@@ -16,3 +16,13 @@ services:
       - "5173:5173"
     depends_on:
       - backend
+      - voice-service
+
+  voice-service:
+    build: 
+      context: ./voice-service
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    volumes:
+      - /tmp:/tmp  # Maps temporary folder for audio processing
