@@ -111,6 +111,11 @@ cd neurathon-mate
 
 ## 🔧 How to Run the Project
 
+## Best:
+You can run the entire project using Docker by executing `docker-compose up --build` from the main
+project directory. This will automatically build and start all services.
+
+Alternative option:
 First, open the `backend` folder and create a file named `.env`. Inside this file, add your Gemini API key
 in the following format:
 
@@ -125,8 +130,6 @@ server by running `node index.js`.
 To enable voice input, go to the `voice` folder and install the required Python libraries using `pip install -r
 requirements.txt`. After that, start the voice service by running `python main.py`.
 
-Alternatively, you can run the entire project using Docker by executing `docker-compose up --build` from the main
-project directory. This will automatically build and start all services.
 
 ```
 
