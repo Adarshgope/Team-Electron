@@ -20,54 +20,65 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 // --- API ROUTES ---
 app.post("/decompose", async (req, res) => {
   try {
-    const { task } = req.body;
-    console.log(`🤖 Received task: "${task}"`);
+    const task = req.body.task;
+    const userPreferences = req.body.userPreferences || {}; 
+    const userTriggers = req.body.userTriggers || "";
 
-    const model = genAI.getGenerativeModel({
-      model: "gemini-2.5-flash", // Using your working model
-      safetySettings: [
-        { category: "HARM_CATEGORY_HARASSMENT", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_HATE_SPEECH", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_SEXUALLY_EXPLICIT", threshold: "BLOCK_NONE" },
-        { category: "HARM_CATEGORY_DANGEROUS_CONTENT", threshold: "BLOCK_NONE" },
-      ],
+    console.log(`🤖 Processing: "${task}" using Gemini 2.5 Flash`);
+
+    // Use Gemini 2.5 Flash
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.5-flash" 
     });
 
     const prompt = `
-    You are a helpful AI assistant for neurodivergent users.
-    Break this task into 4-6 very small, simple, and clear steps.
-    Do not use complex language.
-    Return ONLY a list of steps.
+      You are "Neurathon Mate," an expert executive function coach.
+      
+      TASK: "${task}"
+      USER CONTEXT: "${userTriggers}"
 
-    Task: ${task}
+      INSTRUCTIONS:
+      1. Break the task into 4-6 "Micro-Wins" (tiny, non-intimidating steps).
+      2. Assign a time estimate (e.g., "2 mins") to each step.
+      3. Calculate the "total_time" for the whole task.
+      4. Create a "roadmap" string that is PURE ENCOURAGEMENT (e.g., "You can crush this in 15 mins!").
+      
+      IMPORTANT: Output strictly valid JSON.
+      
+      JSON FORMAT:
+      {
+        "roadmap": "High-energy encouragement summary",
+        "total_time": "15 mins", 
+        "steps": [
+          { "time": "2 mins", "action": "Step action", "tip": "Dopamine tip" }
+        ]
+      }
     `;
 
     const result = await model.generateContent(prompt);
     const response = await result.response;
-    const text = response.text();
+    let text = response.text();
 
-    const steps = text
-      .split("\n")
-      .map((s) => s.replace(/^[\d\-\*\•\)]+\.?\s*/, "").trim())
-      .filter((s) => s.length > 0);
+    // Clean Markdown
+    text = text.replace(/```json|```/g, "").trim();
 
-    res.json({ steps });
+    const data = JSON.parse(text);
+    res.json(data);
 
   } catch (err) {
-    console.error("❌ Gemini API Error:", err.message);
+    console.error("❌ API Error:", err.message);
     res.json({
+      roadmap: "You can do this in just a few minutes.",
+      total_time: "~10 mins",
       steps: [
-        "Take a deep breath 🌿",
-        "Put away distractions",
-        "Do the first tiny step",
-        "Reward yourself! 🎉",
-      ],
+        { time: "1 min", action: "Breathe & Start", tip: "Just the first step!" },
+        { time: "5 mins", action: "Do the main part", tip: "Keep going!" }
+      ]
     });
   }
 });
 
-// --- SERVE REACT FRONTEND (For Docker/Deployment) ---
-// This assumes your frontend build is in a 'dist' folder at the root
+// --- SERVE REACT FRONTEND ---
 app.use(express.static(path.join(__dirname, "../dist")));
 
 app.get(/.*/, (req, res) => {
